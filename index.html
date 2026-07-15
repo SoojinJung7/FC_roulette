@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>룰렛 이벤트 🎡</title>
+<style>
+  :root{--red-top:#e63636;--red-bottom:#b31414;--cream:#fdf3d8;--gold:#ffe08a;}
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
+    background:#333;display:flex;flex-direction:column;align-items:center;padding:24px 12px 60px;min-height:100vh;}
+
+  /* 포스터 */
+  .poster{position:relative;width:420px;max-width:100%;
+    background:linear-gradient(180deg,var(--red-top) 0%,var(--red-bottom) 100%);
+    border-radius:18px;overflow:hidden;padding:34px 26px 0;text-align:center;box-shadow:0 18px 50px rgba(0,0,0,.45);}
+  .sparkle{position:absolute;color:#ffd7d7;opacity:.55;font-size:20px;pointer-events:none;}
+  .s1{top:60px;left:24px;}.s2{top:150px;right:30px;font-size:26px;}.s3{top:300px;left:34px;font-size:26px;}.s4{top:250px;right:26px;}
+  .headline-top{color:var(--cream);font-size:19px;font-weight:700;line-height:1.5;margin-bottom:18px;text-shadow:0 1px 2px rgba(0,0,0,.2);}
+  .headline-top b{color:#fff;}
+  .headline-main{color:var(--gold);font-size:52px;font-weight:900;line-height:1.12;letter-spacing:-1px;margin-bottom:22px;text-shadow:0 3px 0 rgba(0,0,0,.18),0 6px 14px rgba(0,0,0,.25);}
+  .cta-pill{display:inline-block;background:var(--cream);color:#b31414;font-size:16px;font-weight:800;padding:12px 26px;border-radius:999px;margin-bottom:8px;box-shadow:0 4px 10px rgba(0,0,0,.2);}
+  .pin{width:0;height:0;margin:14px auto -6px;border-left:15px solid transparent;border-right:15px solid transparent;border-top:26px solid #e01e1e;position:relative;z-index:5;filter:drop-shadow(0 3px 3px rgba(0,0,0,.35));}
+  .pin::before{content:"";position:absolute;top:-40px;left:-9px;width:18px;height:18px;border-radius:50%;background:#e01e1e;box-shadow:0 2px 4px rgba(0,0,0,.3);}
+  .wheel-window{height:120px;overflow:hidden;display:flex;justify-content:center;margin-top:2px;}
+  .wheel{width:300px;height:300px;flex:0 0 auto;border-radius:50%;border:8px solid #fff;box-shadow:0 0 0 4px rgba(0,0,0,.15);transition:transform 4.5s cubic-bezier(.17,.67,.24,1);}
+
+  .spin-cta{width:420px;max-width:100%;margin-top:20px;background:#e63636;color:#fff;border:0;border-radius:14px;padding:18px;font-size:19px;font-weight:900;cursor:pointer;box-shadow:0 8px 20px rgba(230,54,54,.4);}
+  .spin-cta:active{transform:translateY(1px);}
+  .spin-cta:disabled{opacity:.6;cursor:default;}
+  .disclaimer{width:420px;max-width:100%;margin:10px auto 0;font-size:9px;line-height:1.5;color:#999;text-align:center;padding:0 8px;}
+
+  /* ⚙️ 설정 버튼 */
+  .gear{position:fixed;top:12px;right:12px;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;font-size:20px;border:0;cursor:pointer;z-index:60;}
+  .gear:hover{background:rgba(255,255,255,.3);}
+
+  /* 설정 패널 */
+  .panel{width:420px;max-width:100%;margin-top:22px;display:none;}
+  .panel.open{display:block;}
+  .card{background:#fff;border-radius:14px;padding:18px;box-shadow:0 8px 24px rgba(0,0,0,.25);margin-bottom:14px;}
+  .card h3{margin:0 0 4px;font-size:15px;color:#333;}
+  .card .sub{font-size:12px;color:#999;margin:0 0 12px;}
+  .field{margin-bottom:12px;}
+  .field label{display:block;font-size:12px;color:#777;font-weight:700;margin-bottom:4px;}
+  .field input,.field textarea{width:100%;padding:9px 11px;border:1px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;}
+  .field textarea{resize:vertical;min-height:38px;}
+  .seg-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+  .seg-row .dot{width:16px;height:16px;border-radius:50%;flex:0 0 auto;border:1px solid rgba(0,0,0,.15);}
+  .seg-row input.name{flex:1;padding:8px 8px;border:1px solid #ddd;border-radius:8px;font-size:14px;min-width:0;}
+  .seg-row input.pct,.seg-row input.stock{width:50px;flex:0 0 auto;padding:8px 4px;border:1px solid #ddd;border-radius:8px;font-size:14px;text-align:center;}
+  .seg-row input.stock{border-color:#cfe3d0;background:#f6fbf6;}
+  .col-head{display:flex;font-size:11px;color:#999;padding:0 4px 4px 30px;gap:8px;}
+  .col-head .ch-name{flex:1;}.col-head .ch-pct{width:50px;text-align:center;}.col-head .ch-stock{width:50px;text-align:center;margin-right:34px;}
+  .total-row{font-size:13px;color:#555;margin:6px 2px;}.total-row b{color:#e63636;}
+  #pctWarn{color:#e0a000;font-size:12px;margin-left:6px;}
+  button{border:0;border-radius:8px;padding:10px 16px;font-size:14px;font-weight:700;cursor:pointer;}
+  .add-btn{background:#f0f0f0;color:#333;}
+  .save-btn{background:#2b7;color:#fff;width:100%;padding:13px;font-size:15px;}
+  .btns{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+
+  /* 당첨자 로그 */
+  .wtable{width:100%;border-collapse:collapse;font-size:13px;}
+  .wtable th{text-align:left;color:#999;font-weight:700;border-bottom:1px solid #eee;padding:6px 4px;}
+  .wtable td{padding:8px 4px;border-bottom:1px solid #f4f4f4;color:#333;}
+  .wtable td.prize{color:#e63636;font-weight:700;}
+  .wempty{color:#bbb;font-size:13px;text-align:center;padding:18px 0;}
+  .link-btn{background:none;color:#e63636;font-size:12px;padding:4px;}
+
+  /* 팝업 */
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:100;padding:20px;opacity:0;transition:opacity .25s ease;}
+  .modal-overlay.show{display:flex;opacity:1;}
+  .modal-card{background:linear-gradient(180deg,#fff 0%,#fff7ef 100%);width:340px;max-width:100%;border-radius:22px;padding:30px 26px 24px;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.4);transform:scale(.85);transition:transform .3s cubic-bezier(.2,.9,.3,1.3);border:3px solid #ffe08a;}
+  .modal-overlay.show .modal-card{transform:scale(1);}
+  .confetti{font-size:46px;line-height:1;margin-bottom:6px;}
+  .modal-title{font-size:24px;font-weight:800;color:#333;}
+  .modal-prize{font-size:30px;font-weight:900;color:#e63636;margin:10px 0 2px;line-height:1.15;word-break:keep-all;}
+  .modal-suffix{font-size:24px;font-weight:800;color:#333;margin-bottom:20px;}
+  .modal-form{text-align:left;margin-bottom:20px;}
+  .modal-label{display:block;font-size:13px;color:#666;font-weight:700;margin-bottom:8px;}
+  .modal-input{width:100%;padding:12px 14px;border:1.5px solid #e0c9a0;border-radius:10px;font-size:16px;outline:none;background:#fffdf8;}
+  .modal-input:focus{border-color:#e63636;}
+  .modal-btn{width:100%;background:#e63636;color:#fff;border:0;border-radius:12px;padding:14px;font-size:17px;font-weight:800;cursor:pointer;box-shadow:0 6px 16px rgba(230,54,54,.35);}
+  .name-err{color:#e63636;font-size:12px;margin-top:6px;display:none;}
+
+  /* 비밀번호 팝업 */
+  .pw-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:120;padding:20px;}
+  .pw-overlay.show{display:flex;}
+  .pw-card{background:#fff;padding:26px 24px;border-radius:16px;width:290px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.4);}
+  .pw-card h2{margin:0 0 14px;font-size:17px;}
+  .pw-card input{width:100%;padding:11px;border:1px solid #ddd;border-radius:10px;font-size:15px;margin-bottom:8px;}
+  .pw-card .pw-err{color:#e63636;font-size:12px;min-height:16px;margin-bottom:8px;}
+  .pw-card .btns2{display:flex;gap:8px;}
+  .pw-card .btns2 button{flex:1;}
+  .pw-ok{background:#e63636;color:#fff;}.pw-cancel{background:#eee;color:#555;}
+
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:#222;color:#fff;padding:12px 20px;border-radius:999px;font-size:14px;font-weight:700;opacity:0;pointer-events:none;transition:.3s;z-index:200;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+  <button class="gear" id="gearBtn" title="설정">⚙️</button>
+
+  <!-- 포스터 + 룰렛 (고객이 보는 화면) -->
+  <div class="poster">
+    <span class="sparkle s1">✦</span><span class="sparkle s2">✦</span><span class="sparkle s3">✦</span><span class="sparkle s4">✦</span>
+    <div class="headline-top" id="pTop"></div>
+    <div class="headline-main" id="pMain"></div>
+    <div class="cta-pill" id="pCta"></div>
+    <div class="pin"></div>
+    <div class="wheel-window">
+      <svg class="wheel" id="wheel" viewBox="0 0 300 300"></svg>
+    </div>
+  </div>
+  <button class="spin-cta" id="spinBtn">🎡 룰렛 돌리기</button>
+  <p class="disclaimer" id="disclaimer">본 이벤트는 무료 사은 행사이며, 경품은 룰렛 결과에 따라 무작위로 제공됩니다. 경품은 준비 수량 소진 시 조기 종료될 수 있으며, 경품별 준비 수량에 따라 당첨 가능성이 서로 다를 수 있습니다.</p>
+
+  <!-- 설정 패널 (비밀번호 잠금) -->
+  <div class="panel" id="panel">
+    <div class="card">
+      <h3>포스터 문구</h3>
+      <p class="sub">&lt;b&gt;굵게&lt;/b&gt;, &lt;br&gt; 줄바꿈 사용 가능</p>
+      <div class="field"><label>상단 소개 문구</label><textarea id="fTop"></textarea></div>
+      <div class="field"><label>메인 큰 문구</label><textarea id="fMain"></textarea></div>
+      <div class="field"><label>버튼(알약) 문구</label><input id="fCta"></div>
+      <div class="field"><label>룰렛 노출 높이 (px · 작을수록 절반만 보임)</label><input id="fHalf" type="number" min="60" max="300"></div>
+    </div>
+
+    <div class="card">
+      <h3>룰렛 상품 · 당첨확률</h3>
+      <p class="sub">확률(%)은 자유롭게. 재고는 비워두면 무제한, 0이 되면 룰렛에서 자동 제외됩니다.</p>
+      <div class="col-head"><span class="ch-name">상품명</span><span class="ch-pct">당첨%</span><span class="ch-stock">재고</span></div>
+      <div id="segRows"></div>
+      <div class="total-row">확률 합계: <b id="pctTotal">0%</b> <span id="pctWarn"></span></div>
+      <button class="add-btn" onclick="addSeg()">+ 상품 추가</button>
+    </div>
+
+    <div class="card">
+      <h3>당첨 팝업 문구</h3>
+      <div class="field"><label>제목</label><input id="fPopTitle"></div>
+      <div class="field"><label>당첨 뒤 문구</label><input id="fPopSuffix"></div>
+      <div class="field"><label>이름 입력 안내</label><input id="fPopLabel"></div>
+      <div class="field"><label>버튼 문구</label><input id="fPopBtn"></div>
+    </div>
+
+    <div class="card">
+      <button class="save-btn" id="saveBtn">💾 저장</button>
+    </div>
+
+    <div class="card">
+      <h3>🏆 당첨자 기록 <button class="link-btn" onclick="clearWinners()">전체 지우기</button></h3>
+      <table class="wtable"><thead><tr><th style="width:34%">이름</th><th>상품</th><th style="width:30%">시각</th></tr></thead>
+        <tbody id="wBody"></tbody></table>
+      <div class="wempty" id="wEmpty">아직 당첨자가 없어요.</div>
+    </div>
+  </div>
+
+  <!-- 당첨 팝업 -->
+  <div class="modal-overlay" id="winModal">
+    <div class="modal-card">
+      <div class="confetti">🎉</div>
+      <div class="modal-title" data-key="title">축하합니다!</div>
+      <div class="modal-prize" id="modalPrize"></div>
+      <div class="modal-suffix" data-key="suffix">당첨!!</div>
+      <div class="modal-form">
+        <label class="modal-label" data-key="label">당첨 확인 — 성함을 적어주세요</label>
+        <input type="text" id="winnerName" class="modal-input" placeholder="이름 입력">
+        <div class="name-err" id="nameErr">이름을 입력해 주세요 🙏</div>
+      </div>
+      <button class="modal-btn" id="modalBtn"><span data-key="btn">확인</span></button>
+    </div>
+  </div>
+
+  <!-- 비밀번호 팝업 -->
+  <div class="pw-overlay" id="pwModal">
+    <div class="pw-card">
+      <h2>🔒 설정 비밀번호</h2>
+      <input type="password" id="pwInput" placeholder="비밀번호" autocomplete="off">
+      <div class="pw-err" id="pwErr"></div>
+      <div class="btns2"><button class="pw-cancel" id="pwCancel">취소</button><button class="pw-ok" id="pwOk">확인</button></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+  // ===== 설정 =====
+  const ADMIN_PASSWORD = "1234";   // ← 원하는 비밀번호로 변경
+
+  const PALETTE = ["#fdf3d8","#f7d9d9","#ffe8b0","#e9f0d6","#f3ddef","#d9e8f5","#ffe0cc","#e5e0f5"];
+  const DEFAULT_CONFIG = {
+    poster:{top:'오직 <b>첫구매 회원님</b>만을 위한<br>닥터그루트 BEST 상품 룰렛!',main:'돌리기만 하면<br>100% 당첨!',cta:'룰렛 돌리고, 행운같은 혜택 받기'},
+    segments:[{text:"애딧트\n하트에디션\n샴푸 세트",pct:5,stock:3},{text:"닥터그루트\n로즈메리\n샴푸",pct:10,stock:5},{text:"애딧트\n볼륨\n샴푸 세트",pct:5,stock:3},{text:"블랙샴푸\n스크럽",pct:15,stock:10},{text:"헤어\n에센스",pct:25,stock:20},{text:"1,000원\n쿠폰",pct:40,stock:null}],
+    popup:{title:"축하합니다!",suffix:"당첨!!",label:"당첨 확인 — 성함을 적어주세요",btn:"확인"},
+    half:120
+  };
+  let CONFIG = loadConfig();
+
+  function loadConfig(){
+    try{ const s=localStorage.getItem('roulette_config'); if(s) return Object.assign(JSON.parse(JSON.stringify(DEFAULT_CONFIG)),JSON.parse(s)); }catch(e){}
+    return JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+  }
+  function saveConfig(){ localStorage.setItem('roulette_config', JSON.stringify(CONFIG)); }
+  function getWinners(){ try{ return JSON.parse(localStorage.getItem('roulette_winners')||'[]'); }catch(e){ return []; } }
+  function addWinner(w){ const a=getWinners(); a.unshift(w); localStorage.setItem('roulette_winners', JSON.stringify(a)); }
+
+  // ===== 텍스트 줄바꿈 + 룰렛 그리기 =====
+  function charW(ch,fs){ return /[ᄀ-ᇿ　-鿿가-힣＀-￯]/.test(ch)?fs:fs*0.55; }
+  function lineW(s,fs){ let w=0; for(const c of s) w+=charW(c,fs); return w; }
+  function wrapText(text,maxW,fs){
+    const out=[];
+    String(text).split('\n').forEach(part=>{
+      const words=part.split(/(\s+)/); let line='';
+      const push=()=>{ if(line.trim()!=='') out.push(line.trim()); line=''; };
+      for(let w of words){
+        if(lineW(line+w,fs)<=maxW){ line+=w; continue; }
+        if(line.trim()==='' && lineW(w,fs)>maxW){ for(const ch of w){ if(lineW(line+ch,fs)>maxW) push(); line+=ch; } }
+        else { push(); line=w.trimStart(); }
+      }
+      push();
+    });
+    return out.length?out:[''];
+  }
+  function renderWheel(){
+    const svg=document.getElementById('wheel'), segs=CONFIG.segments, n=segs.length, cx=150,cy=150,r=150, step=2*Math.PI/n;
+    let html='';
+    for(let i=0;i<n;i++){
+      const a0=-Math.PI/2+i*step, a1=a0+step;
+      const x0=cx+r*Math.cos(a0),y0=cy+r*Math.sin(a0),x1=cx+r*Math.cos(a1),y1=cy+r*Math.sin(a1);
+      html+=`<path d="M${cx},${cy} L${x0.toFixed(2)},${y0.toFixed(2)} A${r},${r} 0 0,1 ${x1.toFixed(2)},${y1.toFixed(2)} Z" fill="${PALETTE[i%PALETTE.length]}" stroke="#fff" stroke-width="2"/>`;
+      const am=a0+step/2, tr=r*0.62, tx=cx+tr*Math.cos(am), ty=cy+tr*Math.sin(am), deg=am*180/Math.PI+90, FS=13, LH=15;
+      const maxW=Math.max(46,2*tr*Math.sin(step/2)*0.9);
+      const lines=wrapText(segs[i].text,maxW,FS), yStart=ty-(lines.length-1)*LH/2;
+      const tspans=lines.map((ln,k)=>`<tspan x="${tx.toFixed(2)}" dy="${k===0?0:LH}">${ln}</tspan>`).join('');
+      html+=`<text x="${tx.toFixed(2)}" y="${yStart.toFixed(2)}" fill="#8a3b12" font-size="${FS}" font-weight="700" text-anchor="middle" transform="rotate(${deg.toFixed(1)},${tx.toFixed(2)},${ty.toFixed(2)})">${tspans}</text>`;
+    }
+    html+=`<circle cx="150" cy="150" r="24" fill="#e63636" stroke="#fff" stroke-width="4"/><text x="150" y="154" fill="#fff" font-size="11" font-weight="800" text-anchor="middle">START</text>`;
+    svg.innerHTML=html;
+  }
+  function pickWeighted(){
+    const segs=CONFIG.segments, avail=[];
+    segs.forEach((s,i)=>{ if(s.stock==null || s.stock>0) avail.push(i); });   // 재고 있는 것만
+    if(!avail.length) return -1;                                             // 전부 소진
+    const total=avail.reduce((a,i)=>a+Math.max(0,segs[i].pct||0),0);
+    if(total<=0) return avail[Math.floor(Math.random()*avail.length)];
+    let r=Math.random()*total;
+    for(const i of avail){ r-=Math.max(0,segs[i].pct||0); if(r<0) return i; }
+    return avail[avail.length-1];
+  }
+
+  // ===== 포스터/팝업 반영 =====
+  function applyPoster(){
+    document.getElementById('pTop').innerHTML=CONFIG.poster.top||'';
+    document.getElementById('pMain').innerHTML=CONFIG.poster.main||'';
+    document.getElementById('pCta').innerHTML=CONFIG.poster.cta||'';
+    document.querySelector('.wheel-window').style.height=(CONFIG.half||120)+'px';
+  }
+  function applyPopupText(){
+    const p=CONFIG.popup, set=(k,v)=>{ const el=document.querySelector(`[data-key="${k}"]`); if(el) el.textContent=v||''; };
+    set('title',p.title); set('suffix',p.suffix); set('label',p.label); set('btn',p.btn);
+  }
+
+  // ===== 스핀 =====
+  let cur=0, spinning=false;
+  document.getElementById('spinBtn').addEventListener('click',()=>{
+    if(spinning) return;
+    const btn=document.getElementById('spinBtn');
+    const winner=pickWeighted();
+    if(winner===-1){ toast('모든 경품이 소진되었습니다 🙏'); return; }
+    btn.disabled=true; btn.textContent='돌리는 중...';
+    const n=CONFIG.segments.length, stepDeg=360/n;
+    const winnerCenter=winner*stepDeg+stepDeg/2, jitter=(Math.random()-0.5)*stepDeg*0.6;
+    const targetMod=(360-winnerCenter-jitter+360)%360, curMod=((cur%360)+360)%360, delta=(targetMod-curMod+360)%360;
+    cur+=360*5+delta; spinning=true;
+    document.getElementById('wheel').style.transform=`rotate(${cur}deg)`;
+    setTimeout(()=>{
+      spinning=false; btn.disabled=false; btn.textContent='🎡 룰렛 돌리기';
+      // 재고 차감 (무제한이면 그대로)
+      const s=CONFIG.segments[winner];
+      if(s.stock!=null){ s.stock=Math.max(0,s.stock-1); saveConfig(); if(panel.classList.contains('open')) buildRows(); }
+      openModal(s.text.replace(/\n/g,' '));
+    },4600);
+  });
+
+  // ===== 당첨 팝업 =====
+  function openModal(prize){
+    document.getElementById('modalPrize').textContent=prize;
+    const inp=document.getElementById('winnerName'); inp.value=''; document.getElementById('nameErr').style.display='none';
+    document.getElementById('winModal').classList.add('show'); setTimeout(()=>inp.focus(),300);
+  }
+  function closeModal(){
+    const inp=document.getElementById('winnerName'), name=inp.value.trim();
+    if(name===''){ document.getElementById('nameErr').style.display='block'; inp.focus(); return; }
+    addWinner({name, prize:document.getElementById('modalPrize').textContent, created_at:new Date().toISOString()});
+    renderWinners();
+    document.getElementById('winModal').classList.remove('show');
+    toast(`🎉 ${name}님, 당첨 접수 완료!`);
+  }
+  document.getElementById('modalBtn').addEventListener('click',closeModal);
+  document.getElementById('winnerName').addEventListener('keydown',e=>{ if(e.key==='Enter') closeModal(); });
+
+  // ===== 설정 패널 (비밀번호) =====
+  const panel=document.getElementById('panel');
+  document.getElementById('gearBtn').addEventListener('click',()=>{
+    if(panel.classList.contains('open')){ panel.classList.remove('open'); return; }
+    if(!ADMIN_PASSWORD){ openPanel(); return; }
+    document.getElementById('pwErr').textContent=''; document.getElementById('pwInput').value='';
+    document.getElementById('pwModal').classList.add('show'); setTimeout(()=>document.getElementById('pwInput').focus(),100);
+  });
+  function tryPw(){
+    if(document.getElementById('pwInput').value===ADMIN_PASSWORD){ document.getElementById('pwModal').classList.remove('show'); openPanel(); }
+    else document.getElementById('pwErr').textContent='비밀번호가 틀렸어요';
+  }
+  document.getElementById('pwOk').addEventListener('click',tryPw);
+  document.getElementById('pwCancel').addEventListener('click',()=>document.getElementById('pwModal').classList.remove('show'));
+  document.getElementById('pwInput').addEventListener('keydown',e=>{ if(e.key==='Enter') tryPw(); });
+  function openPanel(){ fillFields(); buildRows(); renderWinners(); panel.classList.add('open'); panel.scrollIntoView({behavior:'smooth'}); }
+
+  // ===== 설정 폼 =====
+  function fillFields(){
+    fTop.value=CONFIG.poster.top||''; fMain.value=CONFIG.poster.main||''; fCta.value=CONFIG.poster.cta||''; fHalf.value=CONFIG.half||120;
+    fPopTitle.value=CONFIG.popup.title||''; fPopSuffix.value=CONFIG.popup.suffix||''; fPopLabel.value=CONFIG.popup.label||''; fPopBtn.value=CONFIG.popup.btn||'';
+  }
+  function syncFields(){
+    CONFIG.poster.top=fTop.value; CONFIG.poster.main=fMain.value; CONFIG.poster.cta=fCta.value; CONFIG.half=Math.max(60,parseInt(fHalf.value)||120);
+    CONFIG.popup.title=fPopTitle.value; CONFIG.popup.suffix=fPopSuffix.value; CONFIG.popup.label=fPopLabel.value; CONFIG.popup.btn=fPopBtn.value;
+  }
+  function buildRows(){
+    const wrap=document.getElementById('segRows'); wrap.innerHTML='';
+    CONFIG.segments.forEach((s,i)=>{
+      const row=document.createElement('div'); row.className='seg-row';
+      row.innerHTML=`<span class="dot" style="background:${PALETTE[i%PALETTE.length]}"></span>
+        <input class="name" value="${s.text.replace(/\n/g,' ').replace(/"/g,'&quot;')}" data-i="${i}">
+        <input class="pct" type="number" min="0" step="1" value="${s.pct}" data-p="${i}">
+        <input class="stock" type="number" min="0" step="1" value="${s.stock==null?'':s.stock}" placeholder="∞" data-s="${i}">
+        <button class="add-btn" onclick="delSeg(${i})">✕</button>`;
+      wrap.appendChild(row);
+    });
+    wrap.querySelectorAll('input').forEach(inp=>inp.addEventListener('input',liveEdit));
+    updateTotal();
+  }
+  function syncSegs(){
+    document.querySelectorAll('.seg-row input.name').forEach(inp=>{ CONFIG.segments[+inp.dataset.i].text=inp.value; });
+    document.querySelectorAll('.seg-row input.pct').forEach(inp=>{ CONFIG.segments[+inp.dataset.p].pct=Math.max(0,parseFloat(inp.value)||0); });
+    document.querySelectorAll('.seg-row input.stock').forEach(inp=>{ CONFIG.segments[+inp.dataset.s].stock = inp.value.trim()===''?null:Math.max(0,parseInt(inp.value)||0); });
+  }
+  function updateTotal(){
+    const t=CONFIG.segments.reduce((a,s)=>a+Math.max(0,s.pct||0),0);
+    document.getElementById('pctTotal').textContent=(Math.round(t*10)/10)+'%';
+    document.getElementById('pctWarn').textContent=Math.abs(t-100)<0.01?'✓ 딱 100%':`(비율대로 자동 환산 · 실질 합 ${Math.round(t*10)/10})`;
+  }
+  function addSeg(){ syncSegs(); CONFIG.segments.push({text:"새 상품",pct:10,stock:null}); buildRows(); refreshPreview(); }
+  function delSeg(i){ syncSegs(); if(CONFIG.segments.length<=2) return; CONFIG.segments.splice(i,1); buildRows(); refreshPreview(); }
+  function liveEdit(){ syncSegs(); syncFields(); refreshPreview(); }
+  function refreshPreview(){ applyPoster(); applyPopupText(); renderWheel(); updateTotal(); }
+
+  ['fTop','fMain','fCta','fHalf','fPopTitle','fPopSuffix','fPopLabel','fPopBtn'].forEach(id=>document.getElementById(id).addEventListener('input',liveEdit));
+
+  document.getElementById('saveBtn').addEventListener('click',()=>{ syncSegs(); syncFields(); saveConfig(); refreshPreview(); toast('✅ 저장 완료!'); });
+
+  // ===== 당첨자 기록 =====
+  function fmt(ts){ try{ const d=new Date(ts); return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }catch(e){ return ''; } }
+  function renderWinners(){
+    const list=getWinners(), body=document.getElementById('wBody');
+    document.getElementById('wEmpty').style.display=list.length?'none':'block';
+    body.innerHTML=list.map(w=>`<tr><td>${(w.name||'').replace(/</g,'&lt;')}</td><td class="prize">${(w.prize||'').replace(/</g,'&lt;')}</td><td>${fmt(w.created_at)}</td></tr>`).join('');
+  }
+  function clearWinners(){ if(confirm('당첨자 기록을 모두 지울까요?')){ localStorage.removeItem('roulette_winners'); renderWinners(); } }
+
+  function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1800); }
+
+  // ===== 초기 렌더 =====
+  applyPoster(); applyPopupText(); renderWheel();
+</script>
+</body>
+</html>
