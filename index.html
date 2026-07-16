@@ -8,34 +8,36 @@
   :root{--red-top:#e63636;--red-bottom:#b31414;--cream:#fdf3d8;--gold:#ffe08a;}
   *{box-sizing:border-box;}
   body{margin:0;font-family:"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
-    background:#333;display:flex;flex-direction:column;align-items:center;padding:24px 12px 60px;min-height:100vh;}
+    background:#333;display:flex;flex-direction:column;align-items:center;padding:24px 0 60px;min-height:100vh;
+    /* 화면 폭 기준 크기: 핸드폰은 화면 꽉, 태블릿까지 비례 확대 */
+    --w:min(94vw,720px);}
 
-  /* 포스터 */
-  .poster{position:relative;width:420px;max-width:100%;
+  /* 포스터 (모든 크기를 --w 비율로 계산 → 어떤 기기든 같은 비율로 꽉 차게) */
+  .poster{position:relative;width:var(--w);
     background:linear-gradient(180deg,var(--red-top) 0%,var(--red-bottom) 100%);
-    border-radius:18px;overflow:hidden;padding:34px 26px 0;text-align:center;box-shadow:0 18px 50px rgba(0,0,0,.45);}
-  .sparkle{position:absolute;color:#ffd7d7;opacity:.55;font-size:20px;pointer-events:none;}
-  .s1{top:60px;left:24px;}.s2{top:150px;right:30px;font-size:26px;}.s3{top:300px;left:34px;font-size:26px;}.s4{top:250px;right:26px;}
-  .headline-top{color:var(--cream);font-size:19px;font-weight:700;line-height:1.5;margin-bottom:18px;text-shadow:0 1px 2px rgba(0,0,0,.2);}
+    border-radius:calc(var(--w)*.043);overflow:hidden;padding:calc(var(--w)*.081) calc(var(--w)*.062) 0;text-align:center;box-shadow:0 18px 50px rgba(0,0,0,.45);}
+  .sparkle{position:absolute;color:#ffd7d7;opacity:.55;font-size:calc(var(--w)*.048);pointer-events:none;}
+  .s1{top:calc(var(--w)*.143);left:calc(var(--w)*.057);}.s2{top:calc(var(--w)*.357);right:calc(var(--w)*.071);font-size:calc(var(--w)*.062);}.s3{top:calc(var(--w)*.714);left:calc(var(--w)*.081);font-size:calc(var(--w)*.062);}.s4{top:calc(var(--w)*.595);right:calc(var(--w)*.062);}
+  .headline-top{color:var(--cream);font-size:calc(var(--w)*.045);font-weight:700;line-height:1.5;margin-bottom:calc(var(--w)*.043);text-shadow:0 1px 2px rgba(0,0,0,.2);}
   .headline-top b{color:#fff;}
-  .headline-main{color:var(--gold);font-size:52px;font-weight:900;line-height:1.12;letter-spacing:-1px;margin-bottom:22px;text-shadow:0 3px 0 rgba(0,0,0,.18),0 6px 14px rgba(0,0,0,.25);}
-  .cta-pill{display:inline-block;background:var(--cream);color:#b31414;font-size:16px;font-weight:800;padding:12px 26px;border-radius:999px;margin-bottom:8px;box-shadow:0 4px 10px rgba(0,0,0,.2);}
-  .pin{width:0;height:0;margin:14px auto -6px;border-left:15px solid transparent;border-right:15px solid transparent;border-top:26px solid #e01e1e;position:relative;z-index:5;filter:drop-shadow(0 3px 3px rgba(0,0,0,.35));}
-  .pin::before{content:"";position:absolute;top:-40px;left:-9px;width:18px;height:18px;border-radius:50%;background:#e01e1e;box-shadow:0 2px 4px rgba(0,0,0,.3);}
-  .wheel-window{height:120px;overflow:hidden;display:flex;justify-content:center;margin-top:2px;}
-  .wheel{width:300px;height:300px;flex:0 0 auto;border-radius:50%;border:8px solid #fff;box-shadow:0 0 0 4px rgba(0,0,0,.15);transition:transform 4.5s cubic-bezier(.17,.67,.24,1);}
+  .headline-main{color:var(--gold);font-size:calc(var(--w)*.124);font-weight:900;line-height:1.12;letter-spacing:calc(var(--w)*-.0024);margin-bottom:calc(var(--w)*.052);text-shadow:0 3px 0 rgba(0,0,0,.18),0 6px 14px rgba(0,0,0,.25);}
+  .cta-pill{display:inline-block;background:var(--cream);color:#b31414;font-size:calc(var(--w)*.038);font-weight:800;padding:calc(var(--w)*.029) calc(var(--w)*.062);border-radius:999px;margin-bottom:calc(var(--w)*.019);box-shadow:0 4px 10px rgba(0,0,0,.2);}
+  .pin{width:0;height:0;margin:calc(var(--w)*.033) auto calc(var(--w)*-.014);border-left:calc(var(--w)*.036) solid transparent;border-right:calc(var(--w)*.036) solid transparent;border-top:calc(var(--w)*.062) solid #e01e1e;position:relative;z-index:5;filter:drop-shadow(0 3px 3px rgba(0,0,0,.35));}
+  .pin::before{content:"";position:absolute;top:calc(var(--w)*-.095);left:calc(var(--w)*-.021);width:calc(var(--w)*.043);height:calc(var(--w)*.043);border-radius:50%;background:#e01e1e;box-shadow:0 2px 4px rgba(0,0,0,.3);}
+  .wheel-window{height:calc(var(--w)*.714*var(--halfRatio,.4));overflow:hidden;display:flex;justify-content:center;margin-top:calc(var(--w)*.005);}
+  .wheel{width:calc(var(--w)*.714);height:calc(var(--w)*.714);flex:0 0 auto;border-radius:50%;border:calc(var(--w)*.019) solid #fff;box-shadow:0 0 0 4px rgba(0,0,0,.15);transition:transform 4.5s cubic-bezier(.17,.67,.24,1);}
 
-  .spin-cta{width:420px;max-width:100%;margin-top:20px;background:#e63636;color:#fff;border:0;border-radius:14px;padding:18px;font-size:19px;font-weight:900;cursor:pointer;box-shadow:0 8px 20px rgba(230,54,54,.4);}
+  .spin-cta{width:var(--w);margin-top:calc(var(--w)*.048);background:#e63636;color:#fff;border:0;border-radius:calc(var(--w)*.033);padding:calc(var(--w)*.043);font-size:calc(var(--w)*.045);font-weight:900;cursor:pointer;box-shadow:0 8px 20px rgba(230,54,54,.4);}
   .spin-cta:active{transform:translateY(1px);}
   .spin-cta:disabled{opacity:.6;cursor:default;}
-  .disclaimer{width:420px;max-width:100%;margin:10px auto 0;font-size:9px;line-height:1.5;color:#999;text-align:center;padding:0 8px;}
+  .disclaimer{width:var(--w);margin:10px auto 0;font-size:calc(var(--w)*.0214);line-height:1.5;color:#999;text-align:center;padding:0 8px;}
 
   /* ⚙️ 설정 버튼 */
   .gear{position:fixed;top:12px;right:12px;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.15);color:#fff;font-size:20px;border:0;cursor:pointer;z-index:60;}
   .gear:hover{background:rgba(255,255,255,.3);}
 
   /* 설정 패널 */
-  .panel{width:420px;max-width:100%;margin-top:22px;display:none;}
+  .panel{width:var(--w);margin-top:22px;display:none;}
   .panel.open{display:block;}
   .card{background:#fff;border-radius:14px;padding:18px;box-shadow:0 8px 24px rgba(0,0,0,.25);margin-bottom:14px;}
   .card h3{margin:0 0 4px;font-size:15px;color:#333;}
@@ -252,7 +254,8 @@
     document.getElementById('pTop').innerHTML=CONFIG.poster.top||'';
     document.getElementById('pMain').innerHTML=CONFIG.poster.main||'';
     document.getElementById('pCta').innerHTML=CONFIG.poster.cta||'';
-    document.querySelector('.wheel-window').style.height=(CONFIG.half||120)+'px';
+    // 룰렛 노출 높이: 원판(300 기준) 대비 비율로 저장 → 화면 크기 따라 자동으로 비례
+    document.body.style.setProperty('--halfRatio',(CONFIG.half||120)/300);
   }
   function applyPopupText(){
     const p=CONFIG.popup, set=(k,v)=>{ const el=document.querySelector(`[data-key="${k}"]`); if(el) el.textContent=v||''; };
