@@ -8,9 +8,9 @@
   :root{--red-top:#e63636;--red-bottom:#b31414;--cream:#fdf3d8;--gold:#ffe08a;}
   *{box-sizing:border-box;}
   body{margin:0;font-family:"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;
-    background:#333;display:flex;flex-direction:column;align-items:center;padding:24px 0 60px;min-height:100vh;
-    /* 화면 폭 기준 크기: 핸드폰은 화면 꽉, 태블릿까지 비례 확대 */
-    --w:min(94vw,720px);}
+    background:#333;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 0;min-height:100vh;
+    /* 가로·세로 중 여유있는 쪽에 맞춰 최대한 확대 (77vh ≈ 세로 화면에서 안 넘치는 한계) */
+    --w:min(94vw,77vh,1100px);}
 
   /* 포스터 (모든 크기를 --w 비율로 계산 → 어떤 기기든 같은 비율로 꽉 차게) */
   .poster{position:relative;width:var(--w);
