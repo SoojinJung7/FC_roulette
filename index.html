@@ -189,6 +189,41 @@
   // ===== 설정 =====
   const ADMIN_PASSWORD = "phillip1234";   // ← 원하는 비밀번호로 변경
 
+  // ===== ☁️ Supabase (클라우드 영구 저장) =====
+  const SB_URL = "https://rbtknssmsymetezvbedq.supabase.co/rest/v1";
+  const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJidGtuc3Ntc3ltZXRlenZiZWRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM5MjcwNjUsImV4cCI6MjA5OTUwMzA2NX0.4xI124JgHf7QF0NYOAVkRW35NmT8yCsntv6phPlWG94";
+  const SB_H  = { apikey:SB_KEY, Authorization:"Bearer "+SB_KEY, "Content-Type":"application/json" };
+
+  async function cloudLoadConfig(){
+    const r = await fetch(`${SB_URL}/roulette_config?id=eq.1&select=data`, {headers:SB_H});
+    if(!r.ok) throw new Error('config load '+r.status);
+    const rows = await r.json();
+    return rows.length ? rows[0].data : null;
+  }
+  async function cloudSaveConfig(){
+    const r = await fetch(`${SB_URL}/roulette_config?on_conflict=id`, {
+      method:'POST', headers:{...SB_H, Prefer:'resolution=merge-duplicates,return=minimal'},
+      body: JSON.stringify({id:1, data:CONFIG, updated_at:new Date().toISOString()})
+    });
+    if(!r.ok) throw new Error('config save '+r.status);
+  }
+  async function cloudGetWinners(){
+    const r = await fetch(`${SB_URL}/roulette_winners?select=*&order=created_at.desc`, {headers:SB_H});
+    if(!r.ok) throw new Error('winners load '+r.status);
+    return await r.json();
+  }
+  async function cloudAddWinner(w){
+    const r = await fetch(`${SB_URL}/roulette_winners`, {
+      method:'POST', headers:{...SB_H, Prefer:'return=minimal'},
+      body: JSON.stringify({name:w.name, prize:w.prize})
+    });
+    if(!r.ok) throw new Error('winner add '+r.status);
+  }
+  async function cloudClearWinners(){
+    const r = await fetch(`${SB_URL}/roulette_winners?id=gt.0`, {method:'DELETE', headers:{...SB_H, Prefer:'return=minimal'}});
+    if(!r.ok) throw new Error('winners clear '+r.status);
+  }
+
   const PALETTE = ["#fdf3d8","#f7d9d9","#ffe8b0","#e9f0d6","#f3ddef","#d9e8f5","#ffe0cc","#e5e0f5"];
   const DEFAULT_CONFIG = {
     poster:{top:'오직 <b>첫구매 회원님</b>만을 위한<br>닥터그루트 BEST 상품 룰렛!',main:'돌리기만 하면<br>100% 당첨!',cta:'룰렛 돌리고, 행운같은 혜택 받기'},
@@ -202,9 +237,10 @@
     try{ const s=localStorage.getItem('roulette_config'); if(s) return Object.assign(JSON.parse(JSON.stringify(DEFAULT_CONFIG)),JSON.parse(s)); }catch(e){}
     return JSON.parse(JSON.stringify(DEFAULT_CONFIG));
   }
-  function saveConfig(){ localStorage.setItem('roulette_config', JSON.stringify(CONFIG)); }
+  function saveConfigLocal(){ localStorage.setItem('roulette_config', JSON.stringify(CONFIG)); }
+  function saveConfig(){ saveConfigLocal(); cloudSaveConfig().catch(e=>console.warn('cloud config save',e)); }
   function getWinners(){ try{ return JSON.parse(localStorage.getItem('roulette_winners')||'[]'); }catch(e){ return []; } }
-  function addWinner(w){ const a=getWinners(); a.unshift(w); localStorage.setItem('roulette_winners', JSON.stringify(a)); }
+  function addWinner(w){ const a=getWinners(); a.unshift(w); localStorage.setItem('roulette_winners', JSON.stringify(a)); cloudAddWinner(w).catch(e=>console.warn('cloud winner add',e)); }
 
   // ===== 텍스트 줄바꿈 + 룰렛 그리기 =====
   function charW(ch,fs){ return /[ᄀ-ᇿ　-鿿가-힣＀-￯]/.test(ch)?fs:fs*0.55; }
@@ -359,7 +395,12 @@
 
   ['fTop','fMain','fCta','fHalf','fPopTitle','fPopSuffix','fPopLabel','fPopBtn'].forEach(id=>document.getElementById(id).addEventListener('input',liveEdit));
 
-  document.getElementById('saveBtn').addEventListener('click',()=>{ syncSegs(); syncFields(); saveConfig(); refreshPreview(); toast('✅ 저장 완료!'); });
+  document.getElementById('saveBtn').addEventListener('click',async ()=>{
+    syncSegs(); syncFields(); saveConfigLocal(); refreshPreview();
+    toast('☁️ 저장 중...');
+    try{ await cloudSaveConfig(); toast('✅ 저장 완료 (클라우드)'); }
+    catch(e){ console.warn(e); toast('⚠️ 클라우드 저장 실패 — 인터넷 확인'); }
+  });
 
   // ===== 당첨자 기록 =====
   function fmt(ts){ try{ const d=new Date(ts); return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }catch(e){ return ''; } }
@@ -368,12 +409,33 @@
     document.getElementById('wEmpty').style.display=list.length?'none':'block';
     body.innerHTML=list.map(w=>`<tr><td>${(w.name||'').replace(/</g,'&lt;')}</td><td class="prize">${(w.prize||'').replace(/</g,'&lt;')}</td><td>${fmt(w.created_at)}</td></tr>`).join('');
   }
-  function clearWinners(){ if(confirm('당첨자 기록을 모두 지울까요?')){ localStorage.removeItem('roulette_winners'); renderWinners(); } }
+  function clearWinners(){ if(confirm('당첨자 기록을 모두 지울까요?')){ localStorage.removeItem('roulette_winners'); renderWinners(); cloudClearWinners().catch(e=>console.warn('cloud winners clear',e)); } }
 
   function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1800); }
 
-  // ===== 초기 렌더 =====
+  // ===== 초기 렌더 (로컬 캐시로 즉시 표시) =====
   applyPoster(); applyPopupText(); renderWheel();
+
+  // ===== ☁️ 클라우드에서 최신값 불러와 갱신 =====
+  async function initFromCloud(){
+    try{
+      const data = await cloudLoadConfig();
+      if(data){                                   // 저장된 설정이 있으면 그걸로
+        CONFIG = Object.assign(JSON.parse(JSON.stringify(DEFAULT_CONFIG)), data);
+        saveConfigLocal();
+      }else{                                       // 아직 없으면 현재 설정을 클라우드에 씨앗으로 저장
+        await cloudSaveConfig();
+      }
+      applyPoster(); applyPopupText(); renderWheel();
+      if(panel.classList.contains('open')){ fillFields(); buildRows(); }
+    }catch(e){ console.warn('config cloud load fail', e); toast('⚠️ 클라우드 연결 실패 — 저장된 값으로 표시'); }
+    try{
+      const ws = await cloudGetWinners();
+      localStorage.setItem('roulette_winners', JSON.stringify(ws));
+      renderWinners();
+    }catch(e){ console.warn('winners cloud load fail', e); }
+  }
+  initFromCloud();
 </script>
 </body>
 </html>
